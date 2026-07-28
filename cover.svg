@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-label="Collection Linter cover">
+  <rect width="1200" height="630" fill="#0f172a"/>
+  <circle cx="1020" cy="110" r="190" fill="#1d4ed8" opacity="0.25"/>
+  <circle cx="130" cy="560" r="230" fill="#10b981" opacity="0.18"/>
+  <text x="90" y="175" fill="#f8fafc" font-family="Inter, Arial, sans-serif" font-size="74" font-weight="800">Collection Linter</text>
+  <text x="94" y="245" fill="#cbd5e1" font-family="Inter, Arial, sans-serif" font-size="34">Local-only Insomnia workspace quality reports</text>
+  <rect x="92" y="315" width="720" height="60" rx="16" fill="#172554"/>
+  <text x="122" y="356" fill="#bfdbfe" font-family="Menlo, Consolas, monospace" font-size="25">duplicate names • risky URLs • env hygiene</text>
+  <rect x="92" y="405" width="460" height="54" rx="16" fill="#064e3b"/>
+  <text x="122" y="440" fill="#a7f3d0" font-family="Menlo, Consolas, monospace" font-size="24">no cloud • no telemetry</text>
+</svg>

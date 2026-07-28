@@ -1,0 +1,51 @@
+{
+  "name": "insomnia-plugin-collection-linter",
+  "version": "1.0.0",
+  "description": "Local-only Insomnia workspace linting: duplicate names, risky URLs, auth query strings, environment hygiene, and redacted reports.",
+  "main": "main.js",
+  "license": "MIT",
+  "author": "oliviajohns5",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/oliviajohns5/insomnia-plugin-collection-linter.git"
+  },
+  "bugs": {
+    "url": "https://github.com/oliviajohns5/insomnia-plugin-collection-linter/issues"
+  },
+  "homepage": "https://github.com/oliviajohns5/insomnia-plugin-collection-linter#readme",
+  "keywords": [
+    "insomnia",
+    "insomnia-plugin",
+    "api-quality",
+    "workspace-linter",
+    "collection-linter",
+    "api-security",
+    "redaction"
+  ],
+  "files": [
+    "main.js",
+    "README.md",
+    "LICENSE",
+    "icon.svg",
+    "cover.svg"
+  ],
+  "scripts": {
+    "test": "node test.js",
+    "test:packaged": "node qa-packaged.js",
+    "pack:dry": "npm pack --dry-run"
+  },
+  "insomnia": {
+    "name": "collection-linter",
+    "displayName": "Collection Linter",
+    "description": "Exports a local redacted lint report for Insomnia workspaces: duplicates, risky URLs, auth query strings, empty bodies, and environment hygiene.",
+    "images": {
+      "icon": "icon.svg",
+      "cover": "cover.svg"
+    },
+    "publisher": {
+      "name": "oliviajohns5"
+    },
+    "unlisted": false
+  },
+  "devDependencies": {}
+}
