@@ -3,7 +3,7 @@
 [![npm version](https://img.shields.io/npm/v/insomnia-plugin-collection-linter.svg)](https://www.npmjs.com/package/insomnia-plugin-collection-linter)
 [![license: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-Local-only workspace linting for Insomnia.
+Local-only workspace linting for Insomnia. v1.0.1 adds a quality score and actionable fix guidance for every finding.
 
 Collection Linter exports a redacted Markdown report for duplicate names, risky URLs, auth query strings, empty bodies, production mutations, and environment hygiene issues.
 
@@ -15,6 +15,8 @@ This plugin gives teams a local hygiene report without sending workspace data an
 
 ## Features
 
+- Adds a 0–100 workspace quality score
+- Adds actionable remediation guidance for every finding
 - Detects duplicate request/folder/environment names
 - Detects duplicate method + host + path routes
 - Flags auth-like query parameters: `api_key`, `access_token`, `client_secret`, `token`
@@ -95,8 +97,8 @@ Local-only report. Secrets are redacted.
 
 ## Findings
 
-| Severity | Type | Location | Message | Preview |
-|---|---|---|---|---|
+| Severity | Type | Location | Message | Preview | Fix |
+|---|---|---|---|---|---|
 | high | query-auth | $.resources[0].url | Auth-like value in query string | api_key=reda…alue |
 | medium | duplicate-route | workspace.requests | Duplicate method+host+path route | get api.example.com/users (2) |
 ```

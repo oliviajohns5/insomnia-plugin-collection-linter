@@ -53,7 +53,10 @@ async function main() {
   }
   const report = t.makeMarkdown(findings);
   assert(report.includes('# Insomnia Collection Linter Report'), 'report title');
-  assert(report.includes('| Severity | Type | Location | Message | Preview |'), 'report table');
+  assert(report.includes('Quality score:'), 'report has quality score');
+  assert(report.includes('| Severity | Type | Location | Message | Preview | Fix |'), 'report table');
+  assert(t.qualityScore(findings) < 100, 'score penalizes findings');
+  assert(t.remediationFor('query-auth').includes('Authorization'), 'remediation exists');
   assert(!report.includes(fakeKey), 'redacts fake key');
   assert(!report.includes(fakeGithub), 'redacts fake github token');
 

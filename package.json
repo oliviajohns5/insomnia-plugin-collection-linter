@@ -1,7 +1,7 @@
 {
   "name": "insomnia-plugin-collection-linter",
-  "version": "1.0.0",
-  "description": "Local-only Insomnia workspace linting: duplicate names, risky URLs, auth query strings, environment hygiene, and redacted reports.",
+  "version": "1.0.1",
+  "description": "Local-only Insomnia workspace linting with quality score, remediation guidance, duplicate/risky URL checks, and redacted reports.",
   "main": "main.js",
   "license": "MIT",
   "author": "oliviajohns5",

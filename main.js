@@ -126,8 +126,25 @@ function redactText(text) {
   return out;
 }
 
+function remediationFor(type) {
+  return {
+    secret: 'Move secrets into private environment values or a vault; never store them in request URLs or exported docs.',
+    'query-auth': 'Move auth material from query string to Authorization headers or private environment variables.',
+    'prod-mutation': 'Add a safer non-production environment, or rename/duplicate this request for explicit production use.',
+    'env-name-mismatch': 'Check the selected environment and base URL; dev/test requests should not target production hosts.',
+    'duplicate-name': 'Rename duplicates so search and team handoff are unambiguous.',
+    'duplicate-route': 'Merge duplicate requests or make their purpose explicit in names/descriptions.',
+    'invalid-url': 'Fix malformed URL or replace host/path with a valid environment variable expression.',
+    'missing-url': 'Add a URL or archive placeholder requests.',
+    'empty-body': 'Add a request body, or document why the mutation intentionally has no body.',
+    'environment-missing-base-url': 'Add base_url/api_url/host so environment intent is visible.',
+    'missing-description': 'Add a description before using risky destructive requests.',
+    'many-hosts': 'Group hosts into environments or split unrelated APIs into separate workspaces.',
+  }[type] || 'Review and clean this workspace item.';
+}
+
 function add(findings, severity, type, location, message, preview) {
-  findings.push({ severity, type, location, message, preview: redactText(preview || '') });
+  findings.push({ severity, type, location, message, preview: redactText(preview || ''), remediation: remediationFor(type) });
 }
 
 function findSecrets(text, location, findings) {
@@ -213,10 +230,16 @@ function summarize(findings) {
   return findings.reduce((acc, f) => { acc[f.severity] = (acc[f.severity] || 0) + 1; return acc; }, { high: 0, medium: 0, low: 0 });
 }
 
+function qualityScore(findings) {
+  const counts = summarize(findings);
+  return Math.max(0, 100 - counts.high * 25 - counts.medium * 10 - counts.low * 3);
+}
+
 function makeMarkdown(findings) {
   const counts = summarize(findings);
-  const rows = findings.map(f => `| ${f.severity} | ${f.type} | ${f.location} | ${f.message} | ${String(f.preview).replace(/\|/g, '\\|')} |`).join('\n');
-  return `# Insomnia Collection Linter Report\n\nGenerated: ${new Date().toISOString()}\n\nLocal-only report. Secrets are redacted.\n\n## Summary\n\n- High: ${counts.high}\n- Medium: ${counts.medium}\n- Low: ${counts.low}\n\n## Findings\n\n| Severity | Type | Location | Message | Preview |\n|---|---|---|---|---|\n${rows || '| low | none | workspace | No collection hygiene issues detected. |  |'}\n`;
+  const score = qualityScore(findings);
+  const rows = findings.map(f => `| ${f.severity} | ${f.type} | ${f.location} | ${f.message} | ${String(f.preview).replace(/\|/g, '\\|')} | ${String(f.remediation || remediationFor(f.type)).replace(/\|/g, '\\|')} |`).join('\n');
+  return `# Insomnia Collection Linter Report\n\nGenerated: ${new Date().toISOString()}\n\nLocal-only report. Secrets are redacted.\n\n## Summary\n\n- Quality score: ${score}/100\n- High: ${counts.high}\n- Medium: ${counts.medium}\n- Low: ${counts.low}\n\n## Findings\n\n| Severity | Type | Location | Message | Preview | Fix |\n|---|---|---|---|---|---|\n${rows || '| low | none | workspace | No collection hygiene issues detected. |  | No action needed. |'}\n`;
 }
 
 async function getWritableExportPath(context, fileName) {
@@ -265,6 +288,8 @@ module.exports.__test = {
   isProductionHost,
   lintWorkspace,
   makeMarkdown,
+  qualityScore,
+  remediationFor,
   normalizeConfig,
   parseExport,
   redactText,
