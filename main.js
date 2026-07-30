@@ -83,6 +83,67 @@ function collectResources(parsed) {
   return { requests, environments, named };
 }
 
+
+
+function exportDiagnostics(rawExport, parsed) {
+  const { requests, environments, named } = collectResources(parsed);
+  const topKeys = parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? Object.keys(parsed).slice(0, 12) : [];
+  return {
+    bytes: safeString(rawExport).length,
+    topKeys,
+    requests: requests.length,
+    environments: environments.length,
+    named: named.length,
+  };
+}
+
+function currentRequestFromContext(context) {
+  const req = context && context.request;
+  if (!req) return null;
+  const call = name => {
+    try { return typeof req[name] === 'function' ? req[name]() : undefined; } catch { return undefined; }
+  };
+  const name = call('getName') || 'Current request';
+  const method = call('getMethod') || 'GET';
+  const url = call('getUrl') || '';
+  const body = call('getBody') || {};
+  if (!url && !method && !name) return null;
+  return { _type: 'request', name, method, url, body };
+}
+
+function collectRequestLikesFromModels(models) {
+  const found = [];
+  walk(models, (obj, path) => {
+    if (!obj || typeof obj !== 'object' || Array.isArray(obj)) return;
+    const maybe = {
+      _type: obj._type || obj.type || 'request',
+      name: obj.name || obj.title,
+      method: obj.method,
+      url: obj.url,
+      body: obj.body,
+    };
+    if (isRequestLike(maybe)) found.push({ obj: maybe, path: `models${path.slice(1)}` });
+  });
+  return found;
+}
+
+function buildActionExport(rawExport, context, models) {
+  const parsed = parseExport(rawExport);
+  const diagnostics = exportDiagnostics(rawExport, parsed);
+  const resources = collectResources(parsed);
+  const synthetic = [];
+  if (!resources.requests.length) {
+    const current = currentRequestFromContext(context);
+    if (current) synthetic.push(current);
+    for (const item of collectRequestLikesFromModels(models || {})) synthetic.push(item.obj);
+  }
+  if (!synthetic.length) return { raw: rawExport, diagnostics, usedFallback: false };
+  let merged = parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? Object.assign({}, parsed) : { originalExport: parsed };
+  const existing = Array.isArray(merged.resources) ? merged.resources : [];
+  merged.resources = existing.concat(synthetic);
+  return { raw: JSON.stringify(merged), diagnostics, usedFallback: true };
+}
+
 function parseUrl(rawUrl) {
   try { return new URL(rawUrl); } catch { return null; }
 }
@@ -140,6 +201,7 @@ function remediationFor(type) {
     'environment-missing-base-url': 'Add base_url/api_url/host so environment intent is visible.',
     'missing-description': 'Add a description before using risky destructive requests.',
     'many-hosts': 'Group hosts into environments or split unrelated APIs into separate workspaces.',
+    'export-scope-empty': 'Insomnia export returned no request resources from this menu. Use the report as current-request fallback data, then retest from workspace/New Request action if available.',
   }[type] || 'Review and clean this workspace item.';
 }
 
@@ -166,6 +228,9 @@ function lintWorkspace(rawExport, config) {
   const parsed = parseExport(rawExport);
   const { requests, environments, named } = collectResources(parsed);
   const findings = [];
+  if (config && config.diagnostics && config.diagnostics.requests === 0) {
+    add(findings, 'low', 'export-scope-empty', 'context.data.export.insomnia', 'Insomnia export returned no request resources; current-request fallback may be in use', `bytes=${config.diagnostics.bytes}; topKeys=${config.diagnostics.topKeys.join(',') || 'none'}`);
+  }
   const nameCounts = new Map();
   const methodPathCounts = new Map();
   const baseHosts = new Map();
@@ -260,9 +325,10 @@ async function getWritableExportPath(context, fileName) {
 const action = {
   label: 'Collection Linter: Export Report',
   icon: 'fa-list-check',
-  action: async (context) => {
+  action: async (context, models) => {
     const raw = await context.data.export.insomnia({ includePrivate: false, format: 'json' });
-    const findings = lintWorkspace(raw);
+    const built = buildActionExport(raw, context, models);
+    const findings = lintWorkspace(built.raw, { diagnostics: built.diagnostics });
     const report = makeMarkdown(findings);
     const fs = require('fs');
     let output = null;
@@ -283,7 +349,11 @@ module.exports.__test = {
   AUTH_QUERY_KEYS,
   DEFAULT_CONFIG,
   SECRET_PATTERNS,
+  buildActionExport,
   collectResources,
+  collectRequestLikesFromModels,
+  currentRequestFromContext,
+  exportDiagnostics,
   getWritableExportPath,
   isProductionHost,
   lintWorkspace,

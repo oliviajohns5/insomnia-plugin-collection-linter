@@ -60,6 +60,24 @@ async function main() {
   assert(!report.includes(fakeKey), 'redacts fake key');
   assert(!report.includes(fakeGithub), 'redacts fake github token');
 
+
+
+  const emptyRaw = JSON.stringify({ resources: [] });
+  const fallbackRequest = {
+    getName: () => 'Dev delete user',
+    getMethod: () => 'DELETE',
+    getUrl: () => 'https://api.production.example.com/users/42?api_key=' + fakeKey,
+    getBody: () => ({ text: '' }),
+  };
+  const built = t.buildActionExport(emptyRaw, { request: fallbackRequest }, {});
+  assert.strictEqual(built.usedFallback, true, 'uses current-request fallback when export has no requests');
+  const fallbackFindings = t.lintWorkspace(built.raw, { diagnostics: built.diagnostics });
+  const fallbackTypes = new Set(fallbackFindings.map(f => f.type));
+  assert(fallbackTypes.has('export-scope-empty'), 'reports empty export diagnostic');
+  assert(fallbackTypes.has('query-auth'), 'fallback catches query auth');
+  assert(fallbackTypes.has('prod-mutation'), 'fallback catches prod mutation');
+  assert(t.currentRequestFromContext({ request: fallbackRequest }).url.includes('production'), 'reads current request context');
+
   const noIssues = t.lintWorkspace(JSON.stringify({ resources: [{ _type: 'request', name: 'Health', method: 'GET', url: 'https://api.example.com/health' }, { _type: 'environment', name: 'Env', data: { base_url: 'https://api.example.com' } }] }));
   assert.strictEqual(t.summarize(noIssues).high, 0, 'clean high count');
 
