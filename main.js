@@ -201,7 +201,7 @@ function remediationFor(type) {
     'environment-missing-base-url': 'Add base_url/api_url/host so environment intent is visible.',
     'missing-description': 'Add a description before using risky destructive requests.',
     'many-hosts': 'Group hosts into environments or split unrelated APIs into separate workspaces.',
-    'export-scope-empty': 'Insomnia export returned no request resources from this menu. Use the report as current-request fallback data, then retest from workspace/New Request action if available.',
+    'export-scope-empty': 'Insomnia did not expose the full workspace from this menu action. This report used current-request fallback data, so route/name duplicate checks may require a workspace-level export context.',
   }[type] || 'Review and clean this workspace item.';
 }
 
@@ -229,7 +229,7 @@ function lintWorkspace(rawExport, config) {
   const { requests, environments, named } = collectResources(parsed);
   const findings = [];
   if (config && config.diagnostics && config.diagnostics.requests === 0) {
-    add(findings, 'low', 'export-scope-empty', 'context.data.export.insomnia', 'Insomnia export returned no request resources; current-request fallback may be in use', `bytes=${config.diagnostics.bytes}; topKeys=${config.diagnostics.topKeys.join(',') || 'none'}`);
+    add(findings, 'low', 'export-scope-empty', 'context.data.export.insomnia', 'Insomnia did not expose request resources from this menu action; current-request fallback was used', `exportBytes=${config.diagnostics.bytes}; parsedKeys=${config.diagnostics.topKeys.join(',') || 'none'}; fallback=current-request`);
   }
   const nameCounts = new Map();
   const methodPathCounts = new Map();

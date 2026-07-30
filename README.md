@@ -3,7 +3,7 @@
 [![npm version](https://img.shields.io/npm/v/insomnia-plugin-collection-linter.svg)](https://www.npmjs.com/package/insomnia-plugin-collection-linter)
 [![license: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-Local-only workspace linting for Insomnia. v1.0.2 adds real Insomnia export diagnostics and a current-request fallback when a menu action returns an empty workspace export.
+Local-only workspace linting for Insomnia. v1.0.3 is desktop-verified in Insomnia and clarifies the current-request fallback used when a menu action does not expose full workspace resources.
 
 Collection Linter exports a redacted Markdown report for duplicate names, risky URLs, auth query strings, empty bodies, production mutations, and environment hygiene issues.
 
@@ -17,7 +17,7 @@ This plugin gives teams a local hygiene report without sending workspace data an
 
 - Adds a 0–100 workspace quality score
 - Adds actionable remediation guidance for every finding
-- Adds export diagnostics/current-request fallback for Insomnia menu actions that return no request resources
+- Adds clearer export diagnostics/current-request fallback for Insomnia menu actions that do not expose full workspace resources
 - Detects duplicate request/folder/environment names
 - Detects duplicate method + host + path routes
 - Flags auth-like query parameters: `api_key`, `access_token`, `client_secret`, `token`
@@ -137,6 +137,17 @@ Collection Linter is local-only.
 - It exports with `includePrivate: false`.
 - It writes a local Markdown file.
 - It redacts secret-like values before writing the report.
+
+## Desktop verification
+
+Verified in Insomnia Desktop on macOS:
+
+- plugin action appears and runs
+- report exports to Desktop
+- quality score drops below 100 on risky current request
+- detects `query-auth`, `prod-mutation`, and `env-name-mismatch`
+- raw test secret is redacted
+- notes `export-scope-empty` when Insomnia exposes current-request fallback instead of full workspace resources
 
 ## Development
 

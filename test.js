@@ -74,6 +74,7 @@ async function main() {
   const fallbackFindings = t.lintWorkspace(built.raw, { diagnostics: built.diagnostics });
   const fallbackTypes = new Set(fallbackFindings.map(f => f.type));
   assert(fallbackTypes.has('export-scope-empty'), 'reports empty export diagnostic');
+  assert(fallbackFindings.find(f => f.type === 'export-scope-empty').message.includes('current-request fallback'), 'fallback wording clear');
   assert(fallbackTypes.has('query-auth'), 'fallback catches query auth');
   assert(fallbackTypes.has('prod-mutation'), 'fallback catches prod mutation');
   assert(t.currentRequestFromContext({ request: fallbackRequest }).url.includes('production'), 'reads current request context');
