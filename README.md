@@ -3,7 +3,7 @@
 [![npm version](https://img.shields.io/npm/v/insomnia-plugin-collection-linter.svg)](https://www.npmjs.com/package/insomnia-plugin-collection-linter)
 [![license: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-Local-only workspace linting for Insomnia. v1.0.3 is desktop-verified in Insomnia and clarifies the current-request fallback used when a menu action does not expose full workspace resources.
+Local-only workspace linting for Insomnia. v1.1.0 adds a **Fix Priority** section that orders the most important cleanup actions before the full findings table.
 
 Collection Linter exports a redacted Markdown report for duplicate names, risky URLs, auth query strings, empty bodies, production mutations, and environment hygiene issues.
 
@@ -16,6 +16,7 @@ This plugin gives teams a local hygiene report without sending workspace data an
 ## Features
 
 - Adds a 0–100 workspace quality score
+- Adds a **Fix Priority** section that ranks the highest-impact fixes before the full table
 - Adds actionable remediation guidance for every finding
 - Adds clearer export diagnostics/current-request fallback for Insomnia menu actions that do not expose full workspace resources
 - Detects duplicate request/folder/environment names
@@ -95,6 +96,12 @@ Local-only report. Secrets are redacted.
 - High: 2
 - Medium: 3
 - Low: 4
+
+## Fix Priority
+
+1. [high] Move auth material from query string to Authorization headers or private environment variables.
+   - Finding: query-auth at $.resources[0].url
+   - Preview: api_key=reda…alue
 
 ## Findings
 

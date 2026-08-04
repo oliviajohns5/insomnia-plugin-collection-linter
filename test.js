@@ -54,6 +54,8 @@ async function main() {
   const report = t.makeMarkdown(findings);
   assert(report.includes('# Insomnia Collection Linter Report'), 'report title');
   assert(report.includes('Quality score:'), 'report has quality score');
+  assert(report.includes('## Fix Priority'), 'report has fix priority section');
+  assert(report.includes('1. [high] Move auth material from query string'), 'fix priority lists highest-impact action first');
   assert(report.includes('| Severity | Type | Location | Message | Preview | Fix |'), 'report table');
   assert(t.qualityScore(findings) < 100, 'score penalizes findings');
   assert(t.remediationFor('query-auth').includes('Authorization'), 'remediation exists');

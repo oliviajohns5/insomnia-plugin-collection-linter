@@ -300,11 +300,53 @@ function qualityScore(findings) {
   return Math.max(0, 100 - counts.high * 25 - counts.medium * 10 - counts.low * 3);
 }
 
+function fixPriority(findings, limit = 7) {
+  const severityRank = { high: 0, medium: 1, low: 2 };
+  const typeRank = {
+    'query-auth': 0,
+    secret: 1,
+    'prod-mutation': 2,
+    'env-name-mismatch': 3,
+    'invalid-url': 4,
+    'missing-url': 5,
+    'duplicate-route': 6,
+    'empty-body': 7,
+    'missing-description': 8,
+    'environment-missing-base-url': 9,
+    'many-hosts': 10,
+    'duplicate-name': 11,
+    'export-scope-empty': 99,
+  };
+  const seen = new Set();
+  return findings
+    .filter(f => f && f.type !== 'export-scope-empty')
+    .slice()
+    .sort((a, b) =>
+      (severityRank[a.severity] ?? 9) - (severityRank[b.severity] ?? 9) ||
+      (typeRank[a.type] ?? 50) - (typeRank[b.type] ?? 50) ||
+      String(a.location || '').localeCompare(String(b.location || ''))
+    )
+    .filter(f => {
+      const key = `${f.severity}:${f.type}:${f.remediation || remediationFor(f.type)}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
+    .slice(0, limit);
+}
+
+function makeFixPriorityMarkdown(findings) {
+  const priority = fixPriority(findings);
+  if (!priority.length) return 'No priority fixes. Workspace looks clean.';
+  return priority.map((f, i) => `${i + 1}. [${f.severity}] ${f.remediation || remediationFor(f.type)}\n   - Finding: ${f.type} at ${f.location}\n   - Preview: ${String(f.preview || '').replace(/\n/g, ' ')}`).join('\n');
+}
+
 function makeMarkdown(findings) {
   const counts = summarize(findings);
   const score = qualityScore(findings);
+  const priority = makeFixPriorityMarkdown(findings);
   const rows = findings.map(f => `| ${f.severity} | ${f.type} | ${f.location} | ${f.message} | ${String(f.preview).replace(/\|/g, '\\|')} | ${String(f.remediation || remediationFor(f.type)).replace(/\|/g, '\\|')} |`).join('\n');
-  return `# Insomnia Collection Linter Report\n\nGenerated: ${new Date().toISOString()}\n\nLocal-only report. Secrets are redacted.\n\n## Summary\n\n- Quality score: ${score}/100\n- High: ${counts.high}\n- Medium: ${counts.medium}\n- Low: ${counts.low}\n\n## Findings\n\n| Severity | Type | Location | Message | Preview | Fix |\n|---|---|---|---|---|---|\n${rows || '| low | none | workspace | No collection hygiene issues detected. |  | No action needed. |'}\n`;
+  return `# Insomnia Collection Linter Report\n\nGenerated: ${new Date().toISOString()}\n\nLocal-only report. Secrets are redacted.\n\n## Summary\n\n- Quality score: ${score}/100\n- High: ${counts.high}\n- Medium: ${counts.medium}\n- Low: ${counts.low}\n\n## Fix Priority\n\n${priority}\n\n## Findings\n\n| Severity | Type | Location | Message | Preview | Fix |\n|---|---|---|---|---|---|\n${rows || '| low | none | workspace | No collection hygiene issues detected. |  | No action needed. |'}\n`;
 }
 
 async function getWritableExportPath(context, fileName) {
@@ -354,6 +396,7 @@ module.exports.__test = {
   collectRequestLikesFromModels,
   currentRequestFromContext,
   exportDiagnostics,
+  fixPriority,
   getWritableExportPath,
   isProductionHost,
   lintWorkspace,

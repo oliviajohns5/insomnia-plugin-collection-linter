@@ -1,7 +1,7 @@
 {
   "name": "insomnia-plugin-collection-linter",
-  "version": "1.0.3",
-  "description": "Desktop-verified local-only Insomnia workspace/current-request linting with export diagnostics, quality score, fix guidance, risky URL checks, and redacted reports.",
+  "version": "1.1.0",
+  "description": "Desktop-verified local-only Insomnia workspace/current-request linting with fix-priority report ordering, export diagnostics, quality score, risky URL checks, and redacted reports.",
   "main": "main.js",
   "license": "MIT",
   "author": "oliviajohns5",
