@@ -14,7 +14,7 @@ const workspace = JSON.stringify({
     { _type: 'request', name: 'Dev delete user', method: 'DELETE', url: 'https://api.production.example.com/users/42', body: { text: '' } },
     { _type: 'request', name: 'Get users', method: 'GET', url: 'https://api.example.com/users?api_key=' + fakeKey },
     { _type: 'request', name: 'Get users', method: 'GET', url: 'https://api.example.com/users?api_key=' + fakeKey },
-    { _type: 'request', name: 'Broken', method: 'POST', url: 'not a url', body: { text: '' } },
+    { _type: 'request', name: 'Broken', method: 'POST', url: 'https://{{ base_url }}/broken', body: { text: '{"tenant":"{{ tenant_id }}"}' } },
     { _type: 'environment', name: 'Dev', data: { client_secret: fakeGithub, other: 'value' } },
     { _type: 'environment', name: 'Tiny', data: { region: 'us' } }
   ]
@@ -48,7 +48,7 @@ async function main() {
 
   const findings = t.lintWorkspace(workspace);
   const types = new Set(findings.map(f => f.type));
-  for (const expected of ['secret', 'query-auth', 'prod-mutation', 'env-name-mismatch', 'duplicate-name', 'duplicate-route', 'invalid-url', 'empty-body', 'environment-missing-base-url']) {
+  for (const expected of ['secret', 'query-auth', 'prod-mutation', 'env-name-mismatch', 'duplicate-name', 'duplicate-route', 'unresolved-template', 'environment-missing-base-url']) {
     assert(types.has(expected), `has ${expected}`);
   }
   const report = t.makeMarkdown(findings);

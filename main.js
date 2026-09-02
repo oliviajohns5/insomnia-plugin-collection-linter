@@ -223,6 +223,16 @@ function findSecrets(text, location, findings) {
   }
 }
 
+function findUnresolvedTemplates(text, location, findings) {
+  const input = safeString(text);
+  const re = /{{\s*[^}]+\s*}}/g;
+  let m;
+  while ((m = re.exec(input)) !== null) {
+    add(findings, 'medium', 'unresolved-template', location, 'Unresolved template tag may be sent literally', m[0]);
+    if (m.index === re.lastIndex) re.lastIndex += 1;
+  }
+}
+
 function lintWorkspace(rawExport, config) {
   const cfg = normalizeConfig(config);
   const parsed = parseExport(rawExport);
@@ -249,6 +259,7 @@ function lintWorkspace(rawExport, config) {
     const rawUrl = safeString(obj.url || '');
     const urlObj = parseUrl(rawUrl);
     if (!rawUrl) add(findings, 'medium', 'missing-url', path, 'Request has no URL', name);
+    findUnresolvedTemplates(rawUrl, `${path}.url`, findings);
     if (rawUrl && !urlObj) add(findings, 'medium', 'invalid-url', path, 'Request URL is not parseable', `${name}: ${rawUrl}`);
     if (urlObj) {
       const route = `${method} ${urlObj.hostname}${urlObj.pathname}`.toLowerCase();
@@ -265,6 +276,7 @@ function lintWorkspace(rawExport, config) {
       }
     }
     const body = extractBodyText(obj.body);
+    findUnresolvedTemplates(body, `${path}.body`, findings);
     if (['POST', 'PUT', 'PATCH'].includes(method) && !body.trim()) add(findings, 'low', 'empty-body', path, `${method} request has empty body`, name);
     if (!safeString(obj.description || obj.metaSortKey || '').trim() && /^delete|remove|purge|destroy/i.test(name)) {
       add(findings, 'low', 'missing-description', path, 'Risky-sounding request has no description', name);
@@ -275,6 +287,7 @@ function lintWorkspace(rawExport, config) {
     const name = safeString(obj.name || 'environment');
     const text = safeString(obj.data || obj);
     findSecrets(text, `${path}.environment`, findings);
+    findUnresolvedTemplates(text, `${path}.environment`, findings);
     const keys = Object.keys(obj.data || {}).map(k => k.toLowerCase());
     const urlKeys = keys.filter(k => k.includes('url') || k.includes('host') || k.includes('base'));
     if (!urlKeys.length) add(findings, 'low', 'environment-missing-base-url', path, 'Environment has no obvious base URL/host key', name);
@@ -309,8 +322,9 @@ function fixPriority(findings, limit = 7) {
     'env-name-mismatch': 3,
     'invalid-url': 4,
     'missing-url': 5,
-    'duplicate-route': 6,
-    'empty-body': 7,
+    'unresolved-template': 6,
+    'duplicate-route': 7,
+    'empty-body': 8,
     'missing-description': 8,
     'environment-missing-base-url': 9,
     'many-hosts': 10,
@@ -396,6 +410,7 @@ module.exports.__test = {
   collectRequestLikesFromModels,
   currentRequestFromContext,
   exportDiagnostics,
+  findUnresolvedTemplates,
   fixPriority,
   getWritableExportPath,
   isProductionHost,

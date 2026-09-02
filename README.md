@@ -187,3 +187,9 @@ npm pack --dry-run
 ## License
 
 MIT
+
+## Changelog
+
+### 1.1.1
+
+- Adds unresolved template-tag linting for request URLs, bodies, and environment data.
