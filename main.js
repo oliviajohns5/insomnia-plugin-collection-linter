@@ -198,6 +198,8 @@ function remediationFor(type) {
     'invalid-url': 'Fix malformed URL or replace host/path with a valid environment variable expression.',
     'missing-url': 'Add a URL or archive placeholder requests.',
     'empty-body': 'Add a request body, or document why the mutation intentionally has no body.',
+    'unresolved-template': 'Resolve the template tag before sharing or sending the request; verify the referenced environment variable exists and is selected.',
+    'empty-name': 'Add a descriptive request, folder, or environment name so reports, search results, and handoffs identify the item clearly.',
     'environment-missing-base-url': 'Add base_url/api_url/host so environment intent is visible.',
     'missing-description': 'Add a description before using risky destructive requests.',
     'many-hosts': 'Group hosts into environments or split unrelated APIs into separate workspaces.',
@@ -323,12 +325,13 @@ function fixPriority(findings, limit = 7) {
     'invalid-url': 4,
     'missing-url': 5,
     'unresolved-template': 6,
-    'duplicate-route': 7,
-    'empty-body': 8,
-    'missing-description': 8,
-    'environment-missing-base-url': 9,
-    'many-hosts': 10,
-    'duplicate-name': 11,
+    'empty-name': 7,
+    'duplicate-route': 8,
+    'empty-body': 9,
+    'missing-description': 9,
+    'environment-missing-base-url': 10,
+    'many-hosts': 11,
+    'duplicate-name': 12,
     'export-scope-empty': 99,
   };
   const seen = new Set();
@@ -355,12 +358,38 @@ function makeFixPriorityMarkdown(findings) {
   return priority.map((f, i) => `${i + 1}. [${f.severity}] ${f.remediation || remediationFor(f.type)}\n   - Finding: ${f.type} at ${f.location}\n   - Preview: ${String(f.preview || '').replace(/\n/g, ' ')}`).join('\n');
 }
 
+function markdownCell(value) {
+  return String(value == null ? '' : value)
+    .replace(/\\/g, '\\\\')
+    .replace(/\|/g, '\\|')
+    .replace(/\r?\n/g, '<br>')
+    .replace(/\r/g, '<br>')
+    .trim();
+}
+
 function makeMarkdown(findings) {
   const counts = summarize(findings);
   const score = qualityScore(findings);
   const priority = makeFixPriorityMarkdown(findings);
-  const rows = findings.map(f => `| ${f.severity} | ${f.type} | ${f.location} | ${f.message} | ${String(f.preview).replace(/\|/g, '\\|')} | ${String(f.remediation || remediationFor(f.type)).replace(/\|/g, '\\|')} |`).join('\n');
+  const rows = findings.map(f => `| ${[
+    f.severity,
+    f.type,
+    f.location,
+    f.message,
+    f.preview,
+    f.remediation || remediationFor(f.type),
+  ].map(markdownCell).join(' | ')} |`).join('\n');
   return `# Insomnia Collection Linter Report\n\nGenerated: ${new Date().toISOString()}\n\nLocal-only report. Secrets are redacted.\n\n## Summary\n\n- Quality score: ${score}/100\n- High: ${counts.high}\n- Medium: ${counts.medium}\n- Low: ${counts.low}\n\n## Fix Priority\n\n${priority}\n\n## Findings\n\n| Severity | Type | Location | Message | Preview | Fix |\n|---|---|---|---|---|---|\n${rows || '| low | none | workspace | No collection hygiene issues detected. |  | No action needed. |'}\n`;
+}
+
+function saveDialogPath(result) {
+  if (!result) return null;
+  if (typeof result === 'string') return result;
+  if (typeof result === 'object') {
+    if (result.canceled) return null;
+    if (typeof result.filePath === 'string' && result.filePath) return result.filePath;
+  }
+  return null;
 }
 
 async function getWritableExportPath(context, fileName) {
@@ -389,7 +418,7 @@ const action = {
     const fs = require('fs');
     let output = null;
     if (context.app && typeof context.app.showSaveDialog === 'function') {
-      output = await context.app.showSaveDialog({ defaultPath: 'insomnia-collection-lint.md' });
+      output = saveDialogPath(await context.app.showSaveDialog({ defaultPath: 'insomnia-collection-lint.md' }));
     }
     if (!output) output = await getWritableExportPath(context, 'insomnia-collection-lint.md');
     fs.writeFileSync(output, report, 'utf8');
@@ -416,10 +445,12 @@ module.exports.__test = {
   isProductionHost,
   lintWorkspace,
   makeMarkdown,
+  markdownCell,
   qualityScore,
   remediationFor,
   normalizeConfig,
   parseExport,
   redactText,
+  saveDialogPath,
   summarize,
 };

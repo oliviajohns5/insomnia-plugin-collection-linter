@@ -190,6 +190,11 @@ MIT
 
 ## Changelog
 
+### 1.1.2
+
+- Adds specific remediation and fix-priority handling for unresolved template tags and empty names.
+- Escapes every Markdown findings-table cell and supports Insomnia save dialogs returning `{ filePath, canceled }`.
+
 ### 1.1.1
 
 - Adds unresolved template-tag linting for request URLs, bodies, and environment data.
