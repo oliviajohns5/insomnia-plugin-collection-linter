@@ -158,7 +158,7 @@ function isProductionHost(host, cfg) {
   if (!h || hostAllowed(h, cfg)) return false;
   return cfg.productionHostPatterns.some(p => {
     const x = String(p).toLowerCase();
-    return x && (h.includes(x) || new RegExp(`(^|[-.])${escapeRegExp(x)}($|[-.])`).test(h));
+    return x && new RegExp(`(^|[-.])${escapeRegExp(x)}($|[-.])`).test(h);
   });
 }
 

@@ -190,6 +190,11 @@ MIT
 
 ## Changelog
 
+### 1.1.3
+
+- Production host matching is now label-boundary aware, reducing false positives such as product/livereload hosts.
+
+
 ### 1.1.2
 
 - Adds specific remediation and fix-priority handling for unresolved template tags and empty names.

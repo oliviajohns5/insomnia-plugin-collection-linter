@@ -47,6 +47,10 @@ async function main() {
   assert(t.isProductionHost('api.production.example.com', t.normalizeConfig({})), 'detects prod host');
   assert(!t.isProductionHost('api.example.com', t.normalizeConfig({})), 'non-prod host clean');
 
+  assert(!t.isProductionHost('api.product.example.com', t.normalizeConfig({})), 'product should not match prod');
+  assert(!t.isProductionHost('livereload.example.com', t.normalizeConfig({})), 'livereload should not match live');
+  assert(t.isProductionHost('api-prod.example.com', t.normalizeConfig({})), 'hyphenated prod host still matches');
+
   const findings = t.lintWorkspace(workspace);
   const types = new Set(findings.map(f => f.type));
   for (const expected of ['secret', 'query-auth', 'prod-mutation', 'env-name-mismatch', 'duplicate-name', 'duplicate-route', 'unresolved-template', 'empty-name', 'environment-missing-base-url']) {
