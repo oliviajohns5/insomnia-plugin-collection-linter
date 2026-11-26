@@ -113,14 +113,28 @@ async function main() {
     await plugin.workspaceActions[0].action(objectCtx);
     assert(fs.existsSync(objectOut), 'object save dialog report written');
 
-    const fallbackCtx = makeContext(null);
-    await plugin.requestActions[0].action(fallbackCtx);
-    assert(fallbackCtx.alerts[0].msg.includes('insomnia-collection-lint.md'), 'fallback path alert');
+    const existingReport = path.join(tmp, 'insomnia-collection-lint.md');
+    fs.writeFileSync(existingReport, 'existing report', 'utf8');
+    for (const [name, dialogResult] of [
+      ['canceled-with-path', { canceled: true, filePath: path.join(tmp, 'should-not-write.md') }],
+      ['null', null],
+      ['undefined', undefined],
+      ['no-path', { canceled: false }],
+    ]) {
+      const ctx = makeContext(dialogResult);
+      ctx.app.getPath = async () => tmp;
+      await plugin.requestActions[0].action(ctx);
+      assert.strictEqual(fs.readFileSync(existingReport, 'utf8'), 'existing report', `${name} preserves prior report`);
+      assert(!fs.existsSync(path.join(tmp, 'should-not-write.md')), `${name} does not write dialog path`);
+      assert.strictEqual(ctx.alerts.length, 0, `${name} shows no success alert`);
+    }
 
-    const canceledCtx = makeContext({ canceled: true, filePath: path.join(tmp, 'should-not-write.md') });
-    await plugin.requestActions[0].action(canceledCtx);
-    assert(!fs.existsSync(path.join(tmp, 'should-not-write.md')), 'canceled dialog ignores filePath');
-    assert(canceledCtx.alerts[0].msg.includes('insomnia-collection-lint.md'), 'canceled dialog falls back to writable path');
+    const noDialogCtx = makeContext(null);
+    delete noDialogCtx.app.showSaveDialog;
+    noDialogCtx.app.getPath = async () => tmp;
+    await plugin.requestActions[0].action(noDialogCtx);
+    assert(fs.readFileSync(existingReport, 'utf8').includes('Insomnia Collection Linter Report'), 'missing dialog API uses fallback path');
+    assert.strictEqual(noDialogCtx.alerts.length, 1, 'fallback export shows success alert');
   } finally {
     fs.rmSync(tmp, { recursive: true, force: true });
   }

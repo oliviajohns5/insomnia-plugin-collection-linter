@@ -419,8 +419,10 @@ const action = {
     let output = null;
     if (context.app && typeof context.app.showSaveDialog === 'function') {
       output = saveDialogPath(await context.app.showSaveDialog({ defaultPath: 'insomnia-collection-lint.md' }));
+      if (!output) return;
+    } else {
+      output = await getWritableExportPath(context, 'insomnia-collection-lint.md');
     }
-    if (!output) output = await getWritableExportPath(context, 'insomnia-collection-lint.md');
     fs.writeFileSync(output, report, 'utf8');
     if (context.app && typeof context.app.alert === 'function') await context.app.alert('Collection Linter report exported', output);
   }
